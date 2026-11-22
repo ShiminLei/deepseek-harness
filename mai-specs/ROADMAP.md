@@ -4,6 +4,7 @@
 
 | 需求 | 标题 | 规格 | 优先级 | 说明 |
 |---|---|---|---|---|
+| 999 | [my-ai-infra SDD 工作台](999-sdd-workbench/BRIEF.md) | standard | P1 | 在 DSH Web 中只读列出当前项目 mai-specs/ 下的 Feature 目录名和项目相对路径。 |
 
 ## 进行中
 

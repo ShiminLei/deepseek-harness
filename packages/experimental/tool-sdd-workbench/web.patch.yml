@@ -1,0 +1,4 @@
+# Local loader overlay for `dsh web --patch`. Not part of the shipped Web preset.
+- insert:
+    - id: tool-sdd-workbench
+      name: '@deepseek-ai/dsh-tool-sdd-workbench'

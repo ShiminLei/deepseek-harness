@@ -157,6 +157,15 @@ export class WorkingDirectoryService extends Service {
   }
 
   /**
+   * Read the directory recorded for this Session, without substituting the deployment default.
+   * @param session - Session whose projection is read.
+   * @returns the recorded absolute directory, or null when the Session has none.
+   */
+  recorded(session: Session): string | null {
+    return this.workingDirectoryProjectionHandle.stateOf(session)
+  }
+
+  /**
    * Validate the current directory and restore the original project when it disappeared.
    * @param agent - live or unpublished Agent owning the Session.
    * @param signal - cancellation for filesystem inspection.

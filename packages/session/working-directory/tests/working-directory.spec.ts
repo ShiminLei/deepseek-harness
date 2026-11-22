@@ -72,6 +72,8 @@ describe('Session working directories', () => {
     await mkdir(directory)
     const withoutOrigin = f.ctx.sessions.create(brandString<SessionId>('wire-without-origin'))
     expect(f.ctx.sessionProjections.snapshot(withoutOrigin).values.workingDirectory).toBeNull()
+    expect(f.ctx.workingDirectory.recorded(withoutOrigin)).toBeNull()
+    expect(f.ctx.workingDirectory.recorded(f.agent.session)).toBe(f.root)
     expect(f.ctx.sessionProjections.snapshot(f.agent.session).values.workingDirectory).toBe(f.root)
     await f.ctx.workingDirectory.set(f.agent, directory)
     const restored = f.ctx.sessions.create(brandString<SessionId>('wire-restored'), {

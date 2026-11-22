@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/tool-sdd-workbench/README.md
+/:
+  en: 4bf22d7539ec6bc1
+  zh: 08b8929441862aa4
+/deepseek-ai-dsh-tool-sdd-workbench:
+  en: 1f70350316a0263f
+  zh: 69c6bae8158a08e0
+/deepseek-ai-dsh-tool-sdd-workbench/summary:
+  en: ce2dc95cc7d5074e
+  zh: c79c06f15216a501
+/deepseek-ai-dsh-tool-sdd-workbench/table-of-contents:
+  en: d7fbbba70852c433
+  zh: b7052bed7902e708
+/deepseek-ai-dsh-tool-sdd-workbench/use-this-package:
+  en: d2a7d55543e13fa3
+  zh: 5d06a54f9a4dc4f2
+/deepseek-ai-dsh-tool-sdd-workbench/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-tool-sdd-workbench/model-experience/returned-list:
+  en: d0c9d36a666cc53f
+  zh: 18e7fe794a1f613b
+/deepseek-ai-dsh-tool-sdd-workbench/model-experience/returned-list/what-the-model-sees:
+  en: 45665f6f51ed7190
+  zh: 73037f733d2b646e
+/deepseek-ai-dsh-tool-sdd-workbench/model-experience/returned-list/token-effect:
+  en: 6a010d8c7ef6da5f
+  zh: ed6dd13e391c1cb1
+/deepseek-ai-dsh-tool-sdd-workbench/model-experience/returned-list/kv-cache-effect:
+  en: f123a5f7d70c7252
+  zh: 1ff93eaf867b7216
+/deepseek-ai-dsh-tool-sdd-workbench/known-limitations-and-deferred-work:
+  en: 3f0a4d66857fcc01
+  zh: 38a866114b87be08
+/deepseek-ai-dsh-tool-sdd-workbench/known-limitations-and-deferred-work/dev-note:
+  en: 64a4d5484784919f
+  zh: 4329870807633466

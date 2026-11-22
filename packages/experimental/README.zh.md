@@ -50,6 +50,7 @@ kind: "package-group"
 | [`webhook-github`](webhook-github/README.zh.md) | 带签名的 GitHub webhook 入口 | — |
 | [`session-title-all-prompts-llm`](session-title-all-prompts-llm/README.zh.md) | 根据所有人类提示生成会话标题 | — |
 | [`tool-terminal`](tool-terminal/README.zh.md) | 持久终端工具 | — |
+| [`tool-sdd-workbench`](tool-sdd-workbench/README.zh.md) | 只读的 SDD Feature 目录列表 | — |
 | [`terminal-panel`](terminal-panel/README.zh.md) | Web 侧栏中的 Agent 终端与只读的用户终端工具 | — |
 | [`tool-ralph`](tool-ralph/README.zh.md) | 有界重复委派任务 | — |
 | [`skill-badge`](skill-badge/README.zh.md) | powered-by-dsh 徽章技能 | — |
