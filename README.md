@@ -40,6 +40,21 @@ pnpm dsh web
 
 `pnpm run build` prepares the repository artifacts. `pnpm dsh web` uses those built artifacts without rebuilding.
 
+## Course assignment
+
+This fork is [ShiminLei/deepseek-harness](https://github.com/ShiminLei/deepseek-harness). The read-only SDD Feature list is [`@deepseek-ai/dsh-tool-sdd-workbench`](packages/experimental/tool-sdd-workbench/README.md). The requirement, design, and acceptance are in [`mai-specs/999-sdd-workbench`](mai-specs/999-sdd-workbench/BRIEF.md).
+
+Node.js 24.9 or newer. From this checkout:
+
+```sh
+pnpm install
+pnpm run build
+pnpm dsh web --patch packages/experimental/tool-sdd-workbench/web.patch.yml --host 127.0.0.1 --port 4173 --no-open
+pnpm exec vitest run packages/experimental/tool-sdd-workbench/tests/tool-sdd-workbench.spec.ts packages/session/working-directory/tests/working-directory.spec.ts
+```
+
+The Web command serves `http://127.0.0.1:4173` and mounts this patch only. The Vitest command checks the tool and `recorded`. Dialogue steps are in [`mai-specs/999-sdd-workbench/test/TEST_PLAN.md`](mai-specs/999-sdd-workbench/test/TEST_PLAN.md).
+
 ## Community and support
 
 - Submit feedback or bug reports through [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions).

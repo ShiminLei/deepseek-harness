@@ -28,11 +28,10 @@ interface FeatureEntry {
   path: string
 }
 
-/** Canonical tool value. `features` is empty unless `status` is `list`. */
-interface ListResult {
-  status: 'list' | 'missing' | 'empty' | 'unreadable'
-  features: FeatureEntry[]
-}
+/** Canonical tool value. `features` is present only when `status` is `list`. */
+type ListResult =
+  | { status: 'list'; features: FeatureEntry[] }
+  | { status: 'missing' | 'empty' | 'unreadable' }
 
 /** Whether `name` is a direct `NNN-slug` Feature directory name. */
 function isFeatureName(featureName: string): boolean {
@@ -57,20 +56,20 @@ function renderText(value: ListResult): string {
 async function listFeatures(fs: Context['fs'], root: string, signal: AbortSignal): Promise<ListResult> {
   try {
     const info = await fs.lstat('mai-specs', { cwd: root }, signal)
-    if (info === undefined) return { status: 'missing', features: [] }
-    if (info.type !== 'directory') return { status: 'unreadable', features: [] }
+    if (info === undefined) return { status: 'missing' }
+    if (info.type !== 'directory') return { status: 'unreadable' }
     const entries = await readdir(join(root, 'mai-specs'), { withFileTypes: true })
     const features = entries.flatMap((entry): FeatureEntry[] => {
       if (entry.isSymbolicLink() || !entry.isDirectory() || !isFeatureName(entry.name)) return []
       return [{ name: entry.name, path: `mai-specs/${entry.name}` }]
     })
     features.sort((left, right) => Number(left.name.slice(0, 3)) - Number(right.name.slice(0, 3)) || left.name.localeCompare(right.name))
-    if (features.length === 0) return { status: 'empty', features: [] }
+    if (features.length === 0) return { status: 'empty' }
     return { status: 'list', features }
   } catch (error: unknown) {
     // lstat reports a missing path as undefined. A thrown read is the unreadable result.
     void error
-    return { status: 'unreadable', features: [] }
+    return { status: 'unreadable' }
   }
 }
 
@@ -98,7 +97,6 @@ export function apply(ctx: Context): void {
           status: { type: 'string', required: true, enum: ['list', 'missing', 'empty', 'unreadable'] },
           features: {
             type: 'array',
-            required: true,
             items: {
               type: 'object',
               additionalProperties: false,

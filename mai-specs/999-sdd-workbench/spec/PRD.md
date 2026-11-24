@@ -7,7 +7,7 @@
 ## 1. 背景与目标（Why）
 
 - **背景/痛点**：在 DSH Web 中打开使用 my-ai-infra 的项目后，用户无法从当前对话直接知道 `mai-specs/` 里有哪些 SDD Feature，以及它们在项目中的位置。
-- **目标**：用户在 DSH Web 已打开 Workspace 的当前对话中，只读看到该会话 workspace 根目录下的 Feature 目录名和项目相对路径。未打开 Workspace 时不发起查询。
+- **目标**：用户在 DSH Web 已打开 Workspace 的当前对话中，只读看到该会话 workspace 根目录下的 Feature 目录名和项目相对路径。未打开 Workspace 时不发起查询。标题为「默认工作区」的首次 Workspace 是已打开的 Workspace，不走这条未打开路径。
 
 ## 2. 用户与场景（Who / When）
 
@@ -58,7 +58,7 @@ flowchart LR
     B --> C[不发起查询]
 ```
 
-**流程说明**：不创建本次查询，不出现 Feature 列表、CP-01 或 CP-02，不读取 `mai-specs/`。本版不为该入口新增文案。
+**流程说明**：未打开是指没有当前、显式或最近 Workspace。这时 `startSession` 在 `sessions.create` 之前返回：有待写入草稿时提示「请先选择工作区」，否则清空主视图。不出现 Feature 列表、CP-01 或 CP-02，不读取 `mai-specs/`。本版不为该入口新增文案。首次使用创建的「默认工作区」已经在 Workspace 列表中，新建会话会进入它，因此不属于本流程。
 
 ## 4. 功能需求（What）
 
@@ -100,7 +100,7 @@ flowchart LR
 - `mai-specs/` 存在但没有合法 Feature：显示 CP-01。
 - `mai-specs/` 不存在：显示 CP-02。
 - 加载、禁用和权限失败没有已确认文案，不在本版承诺内。查询不提供编辑、删除或新建入口。
-- 未打开 Workspace：现有入口不发起查询，本功能不展示列表、CP-01 或 CP-02，也不新增文案。
+- 未打开 Workspace：Workspace 列表为空时，现有入口不发起查询，本功能不展示列表、CP-01 或 CP-02，也不新增文案。已经显示的「默认工作区」不在这条里。
 
 ## 6. 业务规则与约束（Rules）
 
@@ -108,7 +108,7 @@ flowchart LR
 |---|---|---|
 | BR-01 | 只承认 `mai-specs/` 的直属子目录，且目录名匹配 `^[0-9]{3}-[a-z0-9]([a-z0-9-]*[a-z0-9])?$`，slug 最长 64 个字符。文件、更深层目录、`_templates`、`README.md`、`ROADMAP.md` 以及其他不匹配的直属条目都跳过。名称匹配的软链接不计入，也不跟随。 | FR-01 |
 | BR-02 | 多个合法 Feature 按三位编号的数值升序排列。编号相同的目录名不会同时存在。 | FR-01 |
-| BR-03 | 查询只发生在 DSH Web 已打开 Workspace 的会话中。「当前项目」是该会话在查询当时的 workspace 根目录，读取范围只限该根下的 `mai-specs/`。没有已打开的 Workspace 时，现有 Web 入口不发起查询。 | FR-01、FR-02 |
+| BR-03 | 查询只发生在 DSH Web 已打开 Workspace 的会话中。「当前项目」是该会话在查询当时的 workspace 根目录，读取范围只限该根下的 `mai-specs/`。没有当前、显式或最近 Workspace 时，现有 Web 入口不调用 `sessions.create`。标题为「默认工作区」、目录为 Documents 下 `deepseek-harness/default-workspace` 的首次 Workspace 是已打开的 Workspace。 | FR-01、FR-02 |
 
 | 非功能 ID | 性能、可靠性、安全或可访问性要求 | 适用条件与验证口径 |
 |---|---|---|
@@ -130,8 +130,8 @@ flowchart LR
 
 | 文案 ID | 位置/触发状态 | 最终文字 | 变量与格式规则 |
 |---|---|---|---|
-| CP-01 | 当前对话；`mai-specs/` 存在但没有合法 Feature | 未找到 Feature | 整句精确匹配，不追加其他句子 |
-| CP-02 | 当前对话；workspace 根下不存在 `mai-specs/` | 当前项目没有 mai-specs/ 目录 | 整句精确匹配，不追加其他句子 |
+| CP-01 | 当前对话的工具结果；`mai-specs/` 存在但没有合法 Feature | 未找到 Feature | 工具结果整句精确匹配。工具描述要求模型之后只回复这句。宿主不删除模型后来写下的句子 |
+| CP-02 | 当前对话的工具结果；workspace 根下不存在 `mai-specs/` | 当前项目没有 mai-specs/ 目录 | 工具结果整句精确匹配。工具描述要求模型之后只回复这句。宿主不删除模型后来写下的句子 |
 
 列表项没有额外固定句子。目录名原样展示；相对路径为 `mai-specs/` 加上目录名。
 
@@ -152,8 +152,8 @@ flowchart LR
 
 - **Given**：DSH Web 已打开一个 Workspace。该 workspace 根下存在 `mai-specs/`，其中只有 `_templates/`、`README.md`、`ROADMAP.md` 或不匹配规则的条目。
 - **When**：用户在当前对话中查询 SDD Feature。
-- **Then**：同一条对话显示精确文案「未找到 Feature」，不显示 Feature 列表。
-- **验证方式**：人工步骤，在 DSH Web 当前对话核对文案。
+- **Then**：同一次工具结果的文本精确为「未找到 Feature」，不显示 Feature 列表。工具描述要求模型之后的回复只有这句。宿主不删除模型后来写下的句子。
+- **验证方式**：工具测试核对结果文本。页面观察记录指定模型是否只回复这句，该观察不是宿主保证。
 
 ### AC-03：不存在 mai-specs
 
@@ -161,8 +161,8 @@ flowchart LR
 
 - **Given**：DSH Web 已打开一个 Workspace。该会话的 workspace 根下没有 `mai-specs/`。
 - **When**：用户在当前对话中查询 SDD Feature。
-- **Then**：同一条对话显示精确文案「当前项目没有 mai-specs/ 目录」，不显示 Feature 列表。
-- **验证方式**：人工步骤，在 DSH Web 当前对话核对文案。
+- **Then**：同一次工具结果的文本精确为「当前项目没有 mai-specs/ 目录」，不显示 Feature 列表。工具描述要求模型之后的回复只有这句。宿主不删除模型后来写下的句子。
+- **验证方式**：工具测试核对结果文本。页面观察记录指定模型是否只回复这句，该观察不是宿主保证。
 
 ### AC-04：打开另一个 Workspace 后分别查询
 
@@ -186,10 +186,10 @@ flowchart LR
 
 **关联**：BR-03
 
-- **Given**：DSH Web 没有已打开的 Workspace。
-- **When**：用户使用现有 Web 入口准备对话，或请求列出 SDD Feature。
-- **Then**：不发起本次查询。不出现 Feature 列表、CP-01 或 CP-02，也不读取项目的 `mai-specs/`。
-- **验证方式**：人工步骤，在未打开 Workspace 时使用现有入口，确认没有产生本次查询结果。
+- **Given**：DSH Web 的 Workspace 列表为空。没有当前会话所属的 Workspace，没有显式 Workspace，也没有最近 Workspace。界面已经显示「默认工作区」时不使用本条。
+- **When**：用户使用现有 Web 入口新建会话，或在该入口请求列出 SDD Feature。
+- **Then**：`startSession` 不调用 `sessions.create`。没有待写入草稿时清空主视图；有待写入草稿时提示「请先选择工作区」。不出现 Feature 列表、CP-01 或 CP-02，也不读取 `mai-specs/`。
+- **验证方式**：`packages/client/ui-workspace/tests/workspaces-service.client.spec.ts` 中无 Workspace 时不调用 `sessions.create` 的用例。
 
 ## 待确认事项
 
@@ -199,6 +199,8 @@ flowchart LR
 | 名称匹配的软链接目录不计入，也不跟随。 | 本次未单独确认 | BR-01 | 否 | 假设，待确认 |
 | `mai-specs` 存在但不是目录，或目录不可读时，本版不另设文案。 | 本次未确认 | FR-01 | 否 | 待确认 |
 | 未打开 Workspace 时不另设文案。现有 Web 入口不发起查询。 | 本轮按设计评审确认 | BR-03、AC-06 | 否 | 已确认 |
+| 「默认工作区」是已打开的 Workspace。它的目录是 Documents 下的 `deepseek-harness/default-workspace`。只有 Workspace 列表为空时才走 AC-06。 | 2026-11-24 按批改确认。2026-11-22 的 TC-06 在默认工作区首屏发问，测的不是未打开 | BR-03、AC-06 | 否 | 已确认 |
+| CP-01、CP-02 的精确整句由工具结果保证。模型之后只回复该句是工具描述中的指令，宿主不截断后续正文。 | 2026-11-24 按批改确认 | CP-01、CP-02、AC-02、AC-03 | 否 | 已确认 |
 
 已确认并写入正文、不再开放的决定：只识别直属 `NNN-slug` 目录并按编号升序；结果在当前对话展示目录名和相对路径；查询只发生在已打开 Workspace 的会话中，当前项目是该会话当时的 workspace 根。打开另一个 Workspace 是进入那个 Workspace 的会话，不改写原会话。未打开 Workspace 时不发起查询。
 
@@ -208,3 +210,4 @@ flowchart LR
 |---|---|---|
 | 2026-11-22 | 首版。依据 Feature 999 的 BRIEF、上下文，以及本轮确认的三条产品决定。 | FR-01、FR-02、AC-01 至 AC-05 |
 | 2026-11-22 | 按设计评审修订。AC-04 改为打开另一个 Workspace 的会话。查询限于已打开的 Workspace；未打开时现有入口不发起查询。 | FR-02、BR-03、BF-02、BF-03、AC-04、AC-06 |
+| 2026-11-24 | 确认默认工作区是已打开的 Workspace。AC-06 只覆盖 Workspace 列表为空。CP-01、CP-02 的整句保证停在工具结果，模型后续正文不由宿主截断。 | BR-03、BF-03、CP-01、CP-02、AC-02、AC-03、AC-06 |

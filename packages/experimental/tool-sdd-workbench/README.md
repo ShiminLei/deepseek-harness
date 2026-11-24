@@ -24,6 +24,17 @@ English | [中文](README.zh.md)
 
 Mount the plugin in a composition that already has `ctx.fs` and `ctx.workingDirectory`. A local Web overlay is `web.patch.yml` in this package, passed to `dsh web --patch`. The call takes no arguments and does not accept a path from the model.
 
+From this repository, with Node.js 24.9 or newer:
+
+```sh
+pnpm install
+pnpm run build
+pnpm dsh web --patch packages/experimental/tool-sdd-workbench/web.patch.yml --host 127.0.0.1 --port 4173 --no-open
+pnpm exec vitest run packages/experimental/tool-sdd-workbench/tests/tool-sdd-workbench.spec.ts packages/session/working-directory/tests/working-directory.spec.ts
+```
+
+`pnpm run build` prepares the repository artifacts this launch uses. The Web command mounts this patch only. The Vitest command checks the tool and `recorded`. Acceptance steps are in `mai-specs/999-sdd-workbench/test/TEST_PLAN.md`.
+
 ```yaml
 - insert:
     - id: tool-sdd-workbench
@@ -39,7 +50,7 @@ Mount the plugin in a composition that already has `ctx.fs` and `ctx.workingDire
 
 #### What the model sees
 
-The tool name is `sdd_list_features` and it has no parameters. A list result is text lines alternating the directory name and `mai-specs/<name>`. The other results are exactly `未找到 Feature`, `当前项目没有 mai-specs/ 目录`, or `无法读取当前项目的 mai-specs/`. When the result is `未找到 Feature` or `当前项目没有 mai-specs/ 目录`, the reply to the user is that text alone.
+The tool name is `sdd_list_features` and it has no parameters. A list result is text lines alternating the directory name and `mai-specs/<name>`. The other results are exactly `未找到 Feature`, `当前项目没有 mai-specs/ 目录`, or `无法读取当前项目的 mai-specs/`. `features` is present only for a list. The tool description tells the model that a result of `未找到 Feature` or `当前项目没有 mai-specs/ 目录` is replied to with that text alone. The host keeps the rendered tool result and does not delete a later assistant sentence.
 
 #### Token effect
 
@@ -54,6 +65,8 @@ Prefix-stable while the tool definition stays visible. A result is append-only a
 - **Direct legal directories only** — files, other names, and symlink directories are skipped, and a symlink `mai-specs` is not entered.
 - **One session, one workspace** — opening another Workspace is another session. This tool does not move the calling session.
 - **Opt-in** — the shipped Web preset does not mount this plugin.
+- **Exact empty copy is a model instruction** — `output.render` is the fixed sentence. A later assistant sentence is model text, and this package does not remove it.
+- **Default Workspace is open** — the first-run Workspace titled `default-workspace` is an opened Workspace. No-Workspace means `startSession` has no current, explicit, or recent Workspace and returns before `sessions.create`.
 
 <a id="dev-note"></a>
 ### Dev Note

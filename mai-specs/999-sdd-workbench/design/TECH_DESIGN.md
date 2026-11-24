@@ -1,12 +1,12 @@
 # my-ai-infra SDD 工作台 技术方案
 
-> Feature：999 | 有效需求来源：[spec/PRD.md](../spec/PRD.md) | Profile：standard | 模板：`mai-specs/_templates/TECH_DESIGN.tmpl.md` | 代码基线：`5da1b68bc9` | 状态：草案
+> Feature：999 | 有效需求来源：[spec/PRD.md](../spec/PRD.md) | Profile：standard | 模板：`mai-specs/_templates/TECH_DESIGN.tmpl.md` | 代码基线：当前工作区 | 状态：与当前实现一致
 
 [返回需求简报](../BRIEF.md)
 
 ## 需求依据与验收
 
-范围是 PRD 的 FR-01、FR-02、BR-03 和 AC-01 至 AC-06。查询只发生在 DSH Web 已打开 Workspace 的会话中。打开另一个 Workspace 进入的是那个 Workspace 的会话，不改写原会话。没有已打开的 Workspace 时，现有 Web 入口不发起查询，不新增文案。
+范围是 PRD 的 FR-01、FR-02、BR-03 和 AC-01 至 AC-06。查询只发生在 DSH Web 已打开 Workspace 的会话中。打开另一个 Workspace 进入的是那个 Workspace 的会话，不改写原会话。Workspace 列表为空时，现有 Web 入口不发起查询，不新增文案。标题为「默认工作区」的首次 Workspace 是已打开的 Workspace。
 
 | 设计假设 | 行为 | 依据 |
 | --- | --- | --- |
@@ -31,7 +31,7 @@
 
 Web 打开某个 Workspace 时，Host 把该 Workspace 的路径写进**这个新会话**的会话头。工作目录投影的初始值就是该路径。模型在这个会话里调用工具时，执行对象带着这个会话的 Agent。工具读取投影里的路径。
 
-没有已打开的 Workspace 时，`startSession` 在创建会话之前返回，工具不会执行。
+Workspace 列表为空时，`startSession` 在创建会话之前返回，工具不会执行。已经存在的默认工作区会作为目标 Workspace 创建会话。
 
 ```mermaid
 flowchart LR
@@ -48,8 +48,8 @@ flowchart LR
 | 决策 | 推荐及理由 | 代价与备选 | 待判断事项/确认状态 | 详情 |
 | --- | --- | --- | --- | --- |
 | 用会话创建区分两个 Workspace | Web 的 `openWorkspace` 调用 `sessions.create({ workspaceId })` 后切换当前会话。原会话的 cwd 和 `tool/result` 不变。这就是 AC-04。 | 不使用 `workingDirectory.set`。`set` 会改同一会话的目录，当前 Web 没有这个操作。 | 需在 Web 上按打开 A、打开 B、回到 A 复看两个会话 | 2.1.2 |
-| 未打开 Workspace 时不调用工具 | `startSession` 在没有当前、显式或最近 Workspace 时直接返回，不调用 `sessions.create`。AC-06 由这条入口满足，不由工具文案满足。 | 不改 Host 的缺省 cwd。那会改变所有不传 Workspace 的创建方。 | 需确认无 Workspace 时现有入口没有产生查询结果 | 2.1.3 |
-| 工具仍读投影原值 | 已打开 Workspace 的会话头里有路径，`get` 也会返回它。保留 `recorded` 是为了空投影时不落到 `defaultDirectory`。空投影不读磁盘，也不产生已删除的那句文案。 | 直接用 `get` 会在空投影时读到进程启动目录。 | `recorded` 尚未实现 | 2.3.2 |
+| 未打开 Workspace 时不调用工具 | `startSession` 在没有当前、显式或最近 Workspace 时直接返回，不调用 `sessions.create`。AC-06 由这条入口满足，不由工具文案满足。默认工作区已经在列表中时，新建会话进入它。 | 不改 Host 的缺省 cwd。那会改变所有不传 Workspace 的创建方。 | 客户端测试覆盖空列表不调用 `sessions.create` | 2.1.3 |
+| 工具仍读投影原值 | 已打开 Workspace 的会话头里有路径，`get` 也会返回它。`recorded` 在空投影时返回 `null`，不落到 `defaultDirectory`。空投影不读磁盘，也不产生已删除的那句文案。 | 直接用 `get` 会在空投影时读到进程启动目录。 | 已实现于 `packages/session/working-directory/src/index.ts` | 2.3.2 |
 | 子项用 `node:fs` 的 `readdir` | `ctx.fs` 没有带链接位的列举。`listDir` 对子项 `realpath` 后再 `stat`，会进入链接目标。 | 只在 `lstat` 确认 `mai-specs` 是真实目录后，对这一层做 `readdir({ withFileTypes: true })`。 | 需用指向外部的链接确认没有 `realpath` | 2.3.1 |
 | 插件用本地 patch 挂到 Web | 默认 Web 组合不包含这个实验插件。 | 改已发布 preset 会让所有用户默认带上它。 | patch 插入点在实现时对照当时的 Web 组合 | 2.2 |
 
@@ -64,7 +64,7 @@ flowchart LR
 | 字段 | 类型 | 含义 |
 | --- | --- | --- |
 | `status` | `list`、`missing`、`empty`、`unreadable` | 本次查询结论 |
-| `features` | `{ name, path }[]`，仅 `list` 时出现 | `name` 是目录名；`path` 固定为 `mai-specs/` 加目录名 |
+| `features` | `{ name, path }[]`，仅 `status` 为 `list` 时出现 | `name` 是目录名；`path` 固定为 `mai-specs/` 加目录名。`missing`、`empty`、`unreadable` 不返回该字段 |
 
 合法目录名匹配 `^[0-9]{3}-[a-z0-9]([a-z0-9-]*[a-z0-9])?$`，slug 最长 64 个字符。排序按三位编号的数值升序。
 
@@ -77,7 +77,7 @@ flowchart LR
 5. 模型在当前会话发起工具调用。`BatchSettlement.commit` 把本次结果追加为这个会话的 `tool/result`。
 6. 打开另一个 Workspace 重复第 1 步，得到另一个会话。前一个会话的事件不再写入。
 
-没有已打开的 Workspace 时，`UiWorkspaceService.startSession` 在第 360–367 行返回：有草稿则提示「请先选择工作区」，否则清空主视图。两条都不调用 `sessions.create`，因此没有 Agent，也没有工具调用，不读取 `mai-specs/`。
+Workspace 列表为空时，`UiWorkspaceService.startSession` 在解析不到目标后返回：有待写入草稿则提示「请先选择工作区」，否则清空主视图。两条都不调用 `sessions.create`，因此没有 Agent，也没有工具调用，不读取 `mai-specs/`。界面已经显示「默认工作区」时，目标是该 Workspace，本段不适用。该目录不存在时，已创建会话的回合由 `working-directory` 报 `directory does not exist`。这不是 CP-01、CP-02，也不是 AC-06。
 
 查询结果：
 
@@ -103,7 +103,7 @@ flowchart LR
 | `packages/fs/fs-local/src/fsio.ts` | `listDirectory` → `realpath` → `stat` | 说明不能用 `listDir` 判断子目录是不是链接 |
 | `packages/core/tools/src/batch.ts` | `BatchSettlement.commit` | 每次调用追加自己的 `tool/result` |
 
-`recorded` 仍原样返回投影。Web 上能执行到工具的会话，其投影是该 Workspace 的路径，不是 `null`。投影为 `null` 时工具不访问文件系统，也不返回已删除的文案；这不是 AC-06。AC-06 在 `startSession` 返回时已经结束。
+`recorded` 原样返回投影。Web 上能执行到工具的会话，其投影是该 Workspace 的路径，不是 `null`。投影为 `null` 时工具不访问文件系统，也不返回已删除的文案；这不是 AC-06。AC-06 在 `startSession` 返回时已经结束。
 
 ```ts
 recorded(session: Session): string | null {
@@ -111,7 +111,9 @@ recorded(session: Session): string | null {
 }
 ```
 
-这是设计示意，尚未实现，也没有测试。它不访问磁盘，不把 `null` 换成启动目录。
+实现在 `packages/session/working-directory/src/index.ts`。它不访问磁盘，不把 `null` 换成启动目录。
+
+`output.render` 对 `missing` 和 `empty` 输出 CP-02、CP-01 的整句。工具描述要求模型在此之后只回复该句。宿主不删除模型后来写下的助手正文。`features` 只出现在 `list` 的返回值里。
 
 ### 2.2 配置变更
 
@@ -141,7 +143,7 @@ recorded(session: Session): string | null {
 async execute(_args, exec) {
   const root = ctx.workingDirectory.recorded(exec.agent.session)
   if (root === null) {
-    throw new Error('sdd_list_features: the session has no recorded workspace')
+    throw new ToolContextUnavailableError('sdd_list_features: the session has no recorded workspace')
   }
   return listFeatures(root, exec.signal)
 }
@@ -175,7 +177,7 @@ Web 的正常调用都有 Agent，也都有 Workspace 路径。`root === null` �
 - `lstat` 看到软链接后是否立即返回，子项是否只看 `Dirent`，没有 `listDir`、`resolve`、`stat` 或 `realpath`。
 - 空投影是否不读磁盘，并且没有「当前会话未打开项目」这句文案。
 
-省略了插件的 `package.json`、locale 和实验包名单样板。上面的 `execute` 骨架是设计示意，不是已运行代码。
+省略了插件的 `package.json`、locale 和实验包名单样板。运行中的 `execute` 在 `packages/experimental/tool-sdd-workbench/src/index.ts`：没有 Agent 或 `recorded` 为 `null` 时抛出 `ToolContextUnavailableError`，不读磁盘。
 
 ## 3. 风险评估
 
@@ -199,10 +201,10 @@ Web 的正常调用都有 Agent，也都有 Workspace 路径。`root === null` �
 
 | 任务 | 关联模块/决策 | 变更文件（新增/修改/删除） | 前置依赖 | 交付物与验收条件 |
 | --- | --- | --- | --- | --- |
-| 增加 `recorded` | 工作目录读取 | 修改 `packages/session/working-directory/src/index.ts` 及其测试 | 无 | 返回投影原值。空投影不访问文件系统 |
-| 实现 `sdd_list_features` | 工具插件 | 新增 `packages/experimental/tool-sdd-workbench/`，并登记实验包与 tsconfig | `recorded` | AC-01 至 AC-03、AC-05、DA-1、DA-2 |
+| 增加 `recorded` | 工作目录读取 | 已修改 `packages/session/working-directory/src/index.ts` 及其测试 | 无 | 已交付。返回投影原值。空投影不访问文件系统 |
+| 实现 `sdd_list_features` | 工具插件 | 已新增 `packages/experimental/tool-sdd-workbench/`，并登记实验包与 tsconfig | `recorded` | 已交付。`features` 只在 `list` 时出现。AC-01 至 AC-03、AC-05、DA-1、DA-2 的工具结果由该包测试覆盖 |
 | 验证两个 Workspace | FR-02、AC-04 | 同一包的测试，另加 Web 人工步骤 | 上一任务 | 见下方 AC-04 |
-| 验证未打开 Workspace | BR-03、AC-06 | 现有 `startSession` 行为的测试或人工步骤 | 无插件也能验入口 | 见下方 AC-06 |
+| 验证未打开 Workspace | BR-03、AC-06 | 现有 `startSession` 行为的测试 | 无插件也能验入口 | 已由 `workspaces-service.client.spec.ts` 覆盖空列表。默认工作区首屏不在本条 |
 | Web 加载 | 配置 | 新增 patch，不改已发布 preset | 插件包可被 Loader 解析 | `dsh web --patch` 后，已打开 Workspace 的对话能调用该工具 |
 
 ### AC-01 至 AC-06 的实现与验证
@@ -217,7 +219,7 @@ Web 的正常调用都有 Agent，也都有 Workspace 路径。`root === null` �
 
 **AC-05。** 查询前后比较 workspace 的目录项和文件内容，确认没有增删改。`mai-specs` 本身是指向别处的软链接时，结果是 `unreadable`，记录里只有一次 `lstat`。真实目录中有一个指向 workspace 外的合规子目录链接时，结果不包含它，记录里没有该目标的 `realpath`、`stat` 或文件读取。
 
-**AC-06。** DSH Web 没有已打开的 Workspace。使用现有入口准备对话或请求列出 Feature。`startSession` 不调用 `sessions.create`。不出现 Feature 列表、CP-01 或 CP-02，也不读取 `mai-specs/`。不检查工具是否返回某一句文案，因为查询没有开始。
+**AC-06。** DSH Web 的 Workspace 列表为空。使用现有入口新建会话或请求列出 Feature。`startSession` 不调用 `sessions.create`。不出现 Feature 列表、CP-01 或 CP-02，也不读取 `mai-specs/`。不检查工具是否返回某一句文案，因为查询没有开始。已经显示「默认工作区」时不使用本条。
 
 ## 仍需验证的假设
 

@@ -44,6 +44,21 @@ pnpm dsh web
 
 `pnpm run build` 会准备仓库产物。`pnpm dsh web` 会直接使用这些已构建产物，不会重新构建。
 
+## 课程作业
+
+本 Fork 是 [ShiminLei/deepseek-harness](https://github.com/ShiminLei/deepseek-harness)。只读的 SDD Feature 列表是 [`@deepseek-ai/dsh-tool-sdd-workbench`](packages/experimental/tool-sdd-workbench/README.zh.md)。需求、方案和验收在 [`mai-specs/999-sdd-workbench`](mai-specs/999-sdd-workbench/BRIEF.md)。
+
+需要 Node.js 24.9 或更新版本。在本次检出中：
+
+```sh
+pnpm install
+pnpm run build
+pnpm dsh web --patch packages/experimental/tool-sdd-workbench/web.patch.yml --host 127.0.0.1 --port 4173 --no-open
+pnpm exec vitest run packages/experimental/tool-sdd-workbench/tests/tool-sdd-workbench.spec.ts packages/session/working-directory/tests/working-directory.spec.ts
+```
+
+Web 命令在 `http://127.0.0.1:4173` 提供页面，并且只挂载这个 patch。Vitest 命令检查工具和 `recorded`。对话步骤在 [`mai-specs/999-sdd-workbench/test/TEST_PLAN.md`](mai-specs/999-sdd-workbench/test/TEST_PLAN.md)。
+
 ## 社区与支持
 
 - 通过 [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions) 提交反馈或 bug 报告。

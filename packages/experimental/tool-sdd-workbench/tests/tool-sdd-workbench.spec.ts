@@ -122,7 +122,7 @@ describe('sdd_list_features', () => {
 
     expect(result.isError).toBe(false)
     if (result.isError) return
-    expect(result.value).toEqual({ status: 'empty', features: [] })
+    expect(result.value).toEqual({ status: 'empty' })
     expect(text(result)).toBe('未找到 Feature')
     await ctx.fiber.dispose()
   })
@@ -135,7 +135,7 @@ describe('sdd_list_features', () => {
 
     expect(result.isError).toBe(false)
     if (result.isError) return
-    expect(result.value).toEqual({ status: 'missing', features: [] })
+    expect(result.value).toEqual({ status: 'missing' })
     expect(text(result)).toBe('当前项目没有 mai-specs/ 目录')
     await ctx.fiber.dispose()
   })
@@ -173,7 +173,7 @@ describe('sdd_list_features', () => {
 
     expect(result.isError).toBe(false)
     if (result.isError) return
-    expect(result.value).toEqual({ status: 'unreadable', features: [] })
+    expect(result.value).toEqual({ status: 'unreadable' })
     expect(text(result)).toBe('无法读取当前项目的 mai-specs/')
     expect(text(result)).not.toContain('001-secret')
     expect(await import('node:fs/promises').then(fs => fs.readFile(join(root, 'keep.txt'), 'utf8'))).toBe('before')
@@ -191,7 +191,7 @@ describe('sdd_list_features', () => {
       const result = await call(ctx, agent)
       expect(result.isError).toBe(false)
       if (result.isError) return
-      expect(result.value).toEqual({ status: 'unreadable', features: [] })
+      expect(result.value).toEqual({ status: 'unreadable' })
       expect(text(result)).toBe('无法读取当前项目的 mai-specs/')
       await ctx.fiber.dispose()
     } finally {

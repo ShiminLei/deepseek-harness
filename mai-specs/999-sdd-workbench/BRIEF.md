@@ -2,7 +2,7 @@
 
 | 项 | 值 |
 |---|---|
-| Phase | draft |
+| Phase | review |
 | Profile | standard |
 | 优先级 | P1 |
 | 负责人 | 待填 |
@@ -23,7 +23,8 @@
 - 在 DSH Web 当前对话中查询，结果展示目录名和项目相对路径。
 - 当前项目是发起查询的会话当时的 workspace 根，只读其下的 `mai-specs/`。
 - 需求与验收的维护源是 [PRD](spec/PRD.md)。
-- 技术方案见 [design/TECH_DESIGN.md](design/TECH_DESIGN.md)。已打开 Workspace 的会话读取该 Workspace 的路径。打开另一个 Workspace 是另一个会话。未打开时不发起查询。
+- 技术方案见 [design/TECH_DESIGN.md](design/TECH_DESIGN.md)。已打开 Workspace 的会话读取该 Workspace 的路径。打开另一个 Workspace 是另一个会话。Workspace 列表为空时不发起查询。标题为「默认工作区」的首次 Workspace 是已打开的 Workspace。
+- `features` 只在列表结果中出现。CP-01、CP-02 的整句由工具结果保证；模型之后只回复该句是工具描述中的指令，宿主不截断后续正文。
 
 ## 上下文索引
 
