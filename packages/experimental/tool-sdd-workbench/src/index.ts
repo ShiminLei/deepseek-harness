@@ -38,9 +38,14 @@ function isFeatureName(featureName: string): boolean {
   return FEATURE_NAME.test(featureName) && featureName.slice(4).length <= SLUG_MAX
 }
 
-/** Model-facing text for one query result. */
-function renderText(value: ListResult): string {
-  if (value.status === 'list') return value.features.flatMap(feature => [feature.name, feature.path]).join('\n')
+/**
+ * Model-facing text for one query result.
+ * The tool schema leaves `features` optional, so a list reads that array only after `status` is `list`.
+ * @param value - validated tool result. Non-list statuses omit `features`.
+ * @returns the text shown for this result.
+ */
+function renderText(value: { status: ListResult['status']; features?: FeatureEntry[] }): string {
+  if (value.status === 'list') return (value.features ?? []).flatMap(feature => [feature.name, feature.path]).join('\n')
   if (value.status === 'missing') return MISSING
   if (value.status === 'empty') return EMPTY
   return UNREADABLE

@@ -111,7 +111,7 @@
 
 | 路径 | SHA-256 |
 |---|---|
-| `packages/experimental/tool-sdd-workbench/src/index.ts` | `11602c0b461ba045513724003570df33c493da56617945f70799dc7abfaa5b12` |
+| `packages/experimental/tool-sdd-workbench/src/index.ts` | `0045bbf8cbe31436953f80e8c50d5a71d3c5b079da7660c0ba4ac73e99f78d30` |
 | `packages/experimental/tool-sdd-workbench/tests/tool-sdd-workbench.spec.ts` | `094584a3b4ebe185d42048e2da72a9707fae99aeff8bcee50e5792c82a61e82b` |
 | `packages/experimental/tool-sdd-workbench/README.md` | `53ac476fe232d3b30068676a46f83e8c4d3febac4c044f29698acd47ac9f484e` |
 | `packages/experimental/tool-sdd-workbench/README.zh.md` | `015a92eaec52b92a41c56829f42ef282c0359b07e259d35a6d71fdabc0ab63a6` |
@@ -123,4 +123,4 @@
 | `mai-specs/999-sdd-workbench/design/TECH_DESIGN.md` | `b2309ca31d09150c834b2d513e268155fc215f4dcd1c30da428eee387de248ad` |
 | `mai-specs/999-sdd-workbench/BRIEF.md` | `b041786b8a8dd11c0a5afd614bcffbd9a6bf37d6cca43bd0f1a5e3939079f374` |
 
-`web.patch.yml` 和 `recorded` 的指纹与 2026-11-22 代码评审相同。`src/index.ts` 已变：非列表结果不再返回 `features`。
+`web.patch.yml` 和 `recorded` 的指纹与 2026-11-22 代码评审相同。`src/index.ts` 已变：非列表结果不再返回 `features`。渲染函数接受模式推断出的可选 `features`，宿主类型检查可以通过。
